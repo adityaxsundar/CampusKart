@@ -57,7 +57,15 @@ const SellProduct = () => {
       setProductPic(null);
       setTimeout(() => navigate('/products'), 3000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to submit product.');
+      if (err.response?.status === 401) {
+         localStorage.removeItem('user');
+         localStorage.removeItem('token');
+         localStorage.removeItem('refreshToken');
+         setError('Session expired. Please log in again.');
+         setTimeout(() => { window.location.href = '/login'; }, 2000);
+      } else {
+         setError(err.response?.data?.message || 'Failed to submit product.');
+      }
     } finally {
       setLoading(false);
     }
@@ -66,40 +74,40 @@ const SellProduct = () => {
   return (
     <div className="flex items-center justify-center min-h-[70vh] w-full px-4 pt-10">
       <div className="glass-card w-full max-w-xl animate-fade-in relative z-10 p-8">
-        <h2 className="text-3xl font-extrabold text-center mb-2 tracking-tight drop-shadow-md text-white">Sell Your Product</h2>
-        <p className="text-center text-gray-400 text-sm mb-6">List your item. It will go live after admin verification.</p>
+        <h2 className="text-3xl font-black text-center mb-2 tracking-tight text-teal-400 drop-shadow-[0_0_15px_rgba(0,210,255,0.4)]">Sell Your Product</h2>
+        <p className="text-center text-teal-100/70 text-sm mb-6">List your item. It will go live after admin verification.</p>
 
-        {error && <div className="bg-red-500 bg-opacity-20 border border-red-500 text-red-200 p-3 rounded-lg mb-4 text-sm text-center font-medium backdrop-blur-sm shadow">{error}</div>}
-        {success && <div className="bg-green-500 bg-opacity-20 border border-green-500 text-green-200 p-3 rounded-lg mb-4 text-sm text-center font-medium backdrop-blur-sm shadow">{success}</div>}
+        {error && <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-lg mb-4 text-sm text-center font-medium backdrop-blur-sm shadow">{error}</div>}
+        {success && <div className="bg-green-500/10 border border-green-500/30 text-green-400 p-3 rounded-lg mb-4 text-sm text-center font-medium backdrop-blur-sm shadow">{success}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-gray-300 text-sm mb-1">Product Title</label>
+            <label className="block text-teal-500 text-sm mb-1 font-semibold">Product Title</label>
             <input type="text" name="title" required value={formData.title} onChange={handleChange} className="glass-input w-full" placeholder="e.g. Scientific Calculator" />
           </div>
 
           <div>
-            <label className="block text-gray-300 text-sm mb-1">Description</label>
+            <label className="block text-teal-500 text-sm mb-1 font-semibold">Description</label>
             <textarea name="description" required value={formData.description} onChange={handleChange} className="glass-input w-full" rows="3" placeholder="Condition, features, etc."></textarea>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-gray-300 text-sm mb-1">Selling Price (₹)</label>
-              <input type="number" name="price" required value={formData.price} onChange={handleChange} className="glass-input w-full" placeholder="Base price for auction/sale" />
+              <label className="block text-teal-500 text-sm mb-1 font-semibold">Selling Price (₹)</label>
+              <input type="number" name="price" required value={formData.price} onChange={handleChange} className="glass-input w-full" placeholder="Price" />
             </div>
             <div>
-              <label className="block text-gray-300 text-sm mb-1">Original Buying Date</label>
-              <input type="date" name="buyingDate" required value={formData.buyingDate} onChange={handleChange} className="glass-input w-full text-gray-300" />
+              <label className="block text-teal-500 text-sm mb-1 font-semibold">Buying Date</label>
+              <input type="date" name="buyingDate" required value={formData.buyingDate} onChange={handleChange} className="glass-input w-full text-teal-50" />
             </div>
           </div>
 
           <div>
-            <label className="block text-gray-300 text-sm mb-1">Product Picture</label>
-            <input type="file" name="productPic" accept="image/*" onChange={handleChange} className="glass-input w-full file:bg-blue-600 file:border-none file:px-4 file:py-1.5 file:rounded-xl file:text-white file:mr-4 file:cursor-pointer hover:file:bg-blue-500 transition-all text-sm" />
+            <label className="block text-teal-500 text-sm mb-1 font-semibold">Product Picture</label>
+            <input type="file" name="productPic" accept="image/*" onChange={handleChange} className="glass-input w-full file:bg-teal-500/20 file:border file:border-teal-500/30 file:px-4 file:py-1.5 file:rounded-xl file:text-teal-300 file:mr-4 file:cursor-pointer hover:file:bg-teal-500/30 transition-all text-sm" />
           </div>
 
-          <button type="submit" disabled={loading} className="glass-button w-full flex justify-center mt-4">
+          <button type="submit" disabled={loading} className="glass-button w-full flex justify-center mt-6">
             {loading ? 'Submitting...' : 'Upload for Verification'}
           </button>
         </form>

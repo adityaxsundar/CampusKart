@@ -169,26 +169,26 @@ const Login = () => {
 
               {isLogin && !isForgotPassword && (
                 <div className="flex justify-between items-center px-4 mt-2">
-                  <label className="flex items-center text-xs text-gray-300 gap-2 cursor-pointer">
-                    <input type="checkbox" className="w-4 h-4 rounded-full bg-[#111] border-none accent-[#ffa498]" defaultChecked /> Keep me logged in
+                  <label className="flex items-center text-xs text-teal-100 gap-2 cursor-pointer">
+                    <input type="checkbox" className="w-4 h-4 rounded-full bg-[#030a0d] border-none accent-teal-400" defaultChecked /> Keep me logged in
                   </label>
-                  <button type="button" onClick={() => { setIsForgotPassword(!isForgotPassword); setError(''); setMessage(''); }} className="text-xs text-gray-300 hover:text-white transition underline underline-offset-2">
+                  <button type="button" onClick={() => { setIsForgotPassword(!isForgotPassword); setError(''); setMessage(''); }} className="text-xs text-teal-300 hover:text-white transition underline underline-offset-2">
                     Forgot Password
                   </button>
                 </div>
               )}
 
-              <button type="submit" disabled={loading} className="glass-button text-lg mt-8 shadow-[0_10px_20px_rgba(255,164,152,0.3)]">
+              <button type="submit" disabled={loading} className="glass-button text-lg mt-8">
                 {loading ? 'Processing...' : isForgotPassword ? 'Send Reset OTP' : isLogin ? 'Sign in' : 'Create Account'}
               </button>
 
               <div className="text-center mt-6">
                  {isForgotPassword ? (
-                   <button type="button" onClick={() => { setIsLogin(true); setIsForgotPassword(false); setError(''); }} className="text-sm text-[#ffa498] hover:underline font-medium">Return to Login</button>
+                   <button type="button" onClick={() => { setIsLogin(true); setIsForgotPassword(false); setError(''); }} className="text-sm text-teal-400 hover:underline font-medium">Return to Login</button>
                  ) : (
-                   <p className="text-sm text-gray-300">
+                   <p className="text-sm text-teal-200">
                      {isLogin ? "Don't have an account?" : 'Already a member?'}
-                     <button type="button" onClick={() => { setIsLogin(!isLogin); setError(''); }} className="ml-2 font-bold text-white hover:text-[#ffa498] transition">
+                     <button type="button" onClick={() => { setIsLogin(!isLogin); setError(''); }} className="ml-2 font-bold text-teal-50 hover:text-teal-300 transition">
                        {isLogin ? 'Sign Up here' : 'Login instead'}
                      </button>
                    </p>
@@ -226,34 +226,34 @@ const Login = () => {
         </div>
 
         {/* Right Side: Showcase / Testimonial precisely mimicking the graphic */}
-        <div className="bg-[#111111] bg-opacity-95 p-12 md:p-20 flex flex-col justify-center rounded-3xl md:rounded-tl-[3rem] md:rounded-bl-[3rem] shadow-[-10px_0_30px_rgba(0,0,0,0.4)] order-1 md:order-2 border-l border-white border-opacity-10 relative overflow-hidden">
+        <div className="bg-[#030a0d]/95 p-12 md:p-20 flex flex-col justify-center rounded-3xl md:rounded-tl-[3rem] md:rounded-bl-[3rem] shadow-[-10px_0_30px_rgba(0,0,0,0.6)] order-1 md:order-2 border-l border-teal-900/30 relative overflow-hidden">
           
           {/* Aesthetic Starburst shape purely decorative */}
-          <div className="absolute -bottom-16 -right-16 text-blue-500 opacity-30 select-none pointer-events-none">
+          <div className="absolute -bottom-16 -right-16 text-teal-800 opacity-20 select-none pointer-events-none">
              <svg width="400" height="400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.5"><path d="M12 2v20M2 12h20M4.9 4.9l14.2 14.2M4.9 19.1l14.2-14.2M8.5 2.5l7 19M2.5 8.5l19 7M2.5 15.5l19-7M15.5 2.5l-7 19"/></svg>
           </div>
 
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-12 leading-tight">
+          <h2 className="text-4xl md:text-5xl font-bold text-teal-50 mb-12 leading-tight drop-shadow-[0_0_15px_rgba(0,210,255,0.4)]">
             What's our <br />
             Students Said.
           </h2>
           
-          <div className="text-[#ffa498] text-6xl font-serif mb-4 leading-none select-none">“</div>
-          <p className="text-gray-300 text-lg md:text-xl leading-relaxed mb-10 italic border-l-2 border-[#ffa498] pl-6">
+          <div className="text-teal-400 text-6xl font-serif mb-4 leading-none select-none">“</div>
+          <p className="text-teal-100 text-lg md:text-xl leading-relaxed mb-10 italic border-l-2 border-teal-500 pl-6">
             "Searching and finding your campus necessities is now easier than ever. 
             Just browse a product and bid if you need to."
           </p>
 
           <div>
-             <h4 className="text-white font-bold text-xl mb-1">Campus Senior</h4>
-             <p className="text-gray-400 text-sm">Graduating Class at IITP</p>
+             <h4 className="text-teal-200 font-bold text-xl mb-1">Campus Senior</h4>
+             <p className="text-teal-600 text-sm">Graduating Class at IITP</p>
           </div>
 
           <div className="flex gap-4 mt-12">
-            <button className="w-12 h-12 rounded-xl bg-[#ffa498] flex items-center justify-center text-black shadow-md hover:bg-white transition hover:-translate-y-1">
+            <button className="w-12 h-12 rounded-xl bg-teal-500/20 text-teal-300 hover:text-white border border-teal-500/40 flex items-center justify-center shadow-md hover:bg-teal-500/40 transition hover:-translate-y-1">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             </button>
-            <button className="w-12 h-12 rounded-xl bg-[#1a2e22] text-green-500 hover:text-white flex items-center justify-center shadow-md hover:bg-green-600 transition hover:-translate-y-1">
+            <button className="w-12 h-12 rounded-xl bg-teal-500 text-[#030a0d] hover:bg-teal-400 flex items-center justify-center shadow-[0_0_15px_rgba(0,210,255,0.3)] transition hover:-translate-y-1 font-bold">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
           </div>

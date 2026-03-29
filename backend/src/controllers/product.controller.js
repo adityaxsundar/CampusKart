@@ -69,6 +69,57 @@ exports.startAuction = async (req, res) => {
   }
 };
 
+// Get products for the currently logged in user
+exports.getMyProducts = async (req, res) => {
+  try {
+    const products = await Product.find({ seller: req.user._id }).sort({ createdAt: -1 });
+    res.status(200).json({ success: true, data: products });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch your products.', error: error.message });
+  }
+};
+
+// Update an existing product you own
+exports.editProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, price, buyingDate } = req.body;
+
+    const product = await Product.findOne({ _id: id, seller: req.user._id });
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found or unauthorized.' });
+
+    product.title = title || product.title;
+    product.description = description || product.description;
+    product.price = price || product.price;
+    product.buyingDate = buyingDate || product.buyingDate;
+
+    if (req.file) {
+      product.productPic = await uploadToImageKit(req.file);
+    }
+
+    // Changing product details should revert status to pending_approval if strictly verifying, but for now let's keep it simple
+    // product.status = 'pending_approval';
+
+    await product.save();
+    res.status(200).json({ success: true, message: 'Product updated successfully.', data: product });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to update product.', error: error.message });
+  }
+};
+
+// Delete a product you own
+exports.deleteProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findOneAndDelete({ _id: id, seller: req.user._id });
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found or unauthorized to delete.' });
+
+    res.status(200).json({ success: true, message: 'Product deleted successfully.' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to delete product.', error: error.message });
+  }
+};
+
 // ======= ADMIN ROUTES ======= //
 
 // Get purely pending products waiting

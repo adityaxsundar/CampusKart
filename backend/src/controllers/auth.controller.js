@@ -40,7 +40,7 @@ exports.register = async (req, res) => {
 
     // Hash password before saving basic footprint
     const hashedPassword = await bcrypt.hash(password, 10);
-    
+
     // Instead of completely replacing, manage user state 
     // Usually, you should clean up unverified accounts, but for simplicity
     if (!existingUser) {
@@ -84,7 +84,7 @@ exports.verifyOTP = async (req, res) => {
     const accessToken = jwt.sign(
       { userId: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: '15m' }
+      { expiresIn: '1d' }
     );
     const refreshToken = jwt.sign(
       { userId: user._id },
@@ -114,7 +114,7 @@ exports.login = async (req, res) => {
     if (!user || !user.isVerified) {
       return res.status(400).json({ success: false, message: 'Invalid credentials or unverified email.' });
     }
-    
+
     // Admins can block problematic users
     if (user.status === 'suspended') {
       return res.status(403).json({ success: false, message: 'Your account is suspended.' });
@@ -129,7 +129,7 @@ exports.login = async (req, res) => {
     const accessToken = jwt.sign(
       { userId: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: '15m' }
+      { expiresIn: '7d' }
     );
     const refreshToken = jwt.sign(
       { userId: user._id },
@@ -164,7 +164,7 @@ exports.resendOTP = async (req, res) => {
   try {
     let { email } = req.body;
     email = email ? email.toLowerCase() : '';
-    
+
     // Check if the user actually exists
     const user = await User.findOne({ email });
     if (!user) {
@@ -197,7 +197,7 @@ exports.forgotPassword = async (req, res) => {
   try {
     let { email } = req.body;
     email = email ? email.toLowerCase() : '';
-    
+
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ success: false, message: 'Error: This email address is not registered in our database! Please sign up instead.' });
