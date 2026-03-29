@@ -1,50 +1,50 @@
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { ShoppingCart, LogOut } from 'lucide-react';
+import { ShoppingCart, LogOut, User } from 'lucide-react';
 
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
 
   return (
-    <nav className="glassmorphism sticky top-0 z-50 px-6 py-4 flex justify-between items-center max-w-7xl mx-auto mt-4 rounded-2xl mb-8">
+    <nav className="w-full bg-[#030a0d]/90 backdrop-blur-xl border-b border-teal-900/50 sticky top-0 z-50 flex justify-between items-center px-6 py-4 shadow-[0_4px_30px_rgba(0,0,0,0.8)]">
       {/* Left side: Logo */}
-      <div className="flex items-center gap-8">
-        <Link to="/" className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400 flex items-center gap-2 transition hover:scale-105">
-          <ShoppingCart size={28} className="text-blue-400" />
+      <div className="flex items-center gap-6">
+        <Link to="/" className="text-2xl font-black tracking-tight text-white flex items-center gap-2 transition-all hover:text-teal-400">
+          <ShoppingCart size={28} className="text-teal-400" />
           Campus Kart
         </Link>
       </div>
       
       {/* Right side: Authenticated Links or Auth Buttons */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-5">
         {!user && null}
 
         {user && (
           <>
             {user.role === 'admin' && (
-              <Link to="/admin" className="text-yellow-400 font-bold hover:text-white transition group relative px-2 py-1">
+              <Link to="/admin" className="text-yellow-400 font-bold hover:text-yellow-300 transition-colors px-2 py-1 border-b-2 border-transparent hover:border-yellow-400">
                 Admin Panel
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-yellow-400 transition-all group-hover:w-full"></span>
               </Link>
             )}
-            <Link to="/sell" className="text-green-300 hover:text-white transition group relative px-2 py-1">
-              Sell Product
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-green-400 transition-all group-hover:w-full"></span>
+            <Link to="/sell" className="text-teal-50 hover:text-teal-300 transition-colors px-2 py-1 tracking-wide font-medium border-b-2 border-transparent hover:border-teal-400">
+              Sell
             </Link>
-            <Link to="/products" className="text-gray-200 hover:text-white transition group relative px-2 py-1">
+            <Link to="/products" className="text-teal-50 hover:text-teal-300 transition-colors px-2 py-1 tracking-wide font-medium border-b-2 border-transparent hover:border-teal-400">
               Marketplace
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-400 transition-all group-hover:w-full"></span>
             </Link>
-            <Link to="/auctions" className="text-gray-200 hover:text-white transition group relative px-2 py-1">
+            <Link to="/auctions" className="text-teal-50 hover:text-teal-300 transition-colors px-2 py-1 tracking-wide font-medium border-b-2 border-transparent hover:border-teal-400">
               Auctions
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-purple-400 transition-all group-hover:w-full"></span>
             </Link>
-            <Link to="/chat" className="text-green-300 font-bold hover:text-white transition group relative px-2 py-1">
-              Live Chat
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-green-500 transition-all group-hover:w-full"></span>
+            <Link to="/chat" className="text-teal-50 hover:text-teal-300 transition-colors px-2 py-1 tracking-wide font-medium border-b-2 border-transparent hover:border-teal-400">
+              Chat
             </Link>
-            <button onClick={logout} className="ml-4 flex items-center gap-2 bg-red-500 bg-opacity-20 hover:bg-opacity-40 text-red-200 hover:text-white border border-red-500 border-opacity-30 rounded-xl px-4 py-2 transition-all">
+            <div className="w-px h-6 bg-teal-900/50 mx-2"></div>
+            <Link to="/profile" className="flex items-center gap-2 text-teal-400 hover:text-teal-200 transition-colors px-2 py-1 font-bold">
+              <User size={20} />
+              Profile
+            </Link>
+            <button onClick={logout} className="ml-2 flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 rounded-xl px-4 py-2 transition-all">
               <LogOut size={18} />
               Quit
             </button>

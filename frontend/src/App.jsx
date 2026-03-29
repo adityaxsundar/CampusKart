@@ -18,16 +18,17 @@ const RootRedirect = () => {
 
 import Products from './components/Products';
 
+import Profile from './components/Profile';
 
 // Placeholder for Auctions Page
 const Auctions = () => (
   <div className="flex flex-col items-center justify-center min-h-[50vh] animate-fade-in text-center px-4">
-    <h1 className="text-4xl font-bold text-[#ff6b6b] mb-4 drop-shadow-lg">Live Auctions</h1>
-    <p className="text-gray-300 max-w-lg mb-8">
+    <h1 className="text-4xl font-black text-teal-400 mb-4 drop-shadow-lg">Live Auctions</h1>
+    <p className="text-teal-100 max-w-lg mb-8">
       Place structured bids on real-time timed listings. Your bids will be managed securely over Socket.io connections!
     </p>
-    <div className="glass-card w-full max-w-3xl flex items-center justify-center h-64 mt-10 bg-[#111] bg-opacity-90">
-      <p className="opacity-50 text-2xl tracking-wide font-medium">No Active Auctions Right Now.</p>
+    <div className="glass-card w-full max-w-3xl flex items-center justify-center h-64 mt-10">
+      <p className="opacity-50 text-2xl tracking-wide font-medium text-teal-50">No Active Auctions Right Now.</p>
     </div>
   </div>
 );
@@ -37,9 +38,9 @@ const App = () => {
     <AuthProvider>
       <Router>
         <div className="min-h-screen flex flex-col relative overflow-hidden bg-transparent">
-          {/* Subtle decorative background elements */}
-          <div className="fixed top-20 left-10 w-[400px] h-[400px] bg-blue-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-20 animate-pulse pointer-events-none -z-10"></div>
-          <div className="fixed bottom-20 right-10 w-[400px] h-[400px] bg-purple-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-20 animate-pulse delay-500 pointer-events-none -z-10"></div>
+          {/* Subtle decorative background elements updated for teal theme */}
+          <div className="fixed top-20 left-10 w-[400px] h-[400px] bg-teal-600 rounded-full mix-blend-screen filter blur-[128px] opacity-20 animate-pulse pointer-events-none -z-10"></div>
+          <div className="fixed bottom-20 right-10 w-[400px] h-[400px] bg-teal-400 rounded-full mix-blend-screen filter blur-[128px] opacity-10 animate-pulse delay-500 pointer-events-none -z-10"></div>
 
           <Navbar />
 
@@ -52,6 +53,7 @@ const App = () => {
               <Route path="/sell" element={<SellProduct />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/chat" element={<Chat />} />
+              <Route path="/profile" element={<Profile />} />
               {/* Fallback route */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
