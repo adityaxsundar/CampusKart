@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply m-0 p-0 box-border text-white;
+    background: linear-gradient(135deg, #4A1A4A, #9B3D7B, #E6666A, #D18968);
+    background-size: 300% 300%;
+    animation: gradientBG 20s ease infinite;
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@layer components {
+  .glassmorphism {
+    @apply bg-[#151515] bg-opacity-80 backdrop-blur-xl border border-[#222] shadow-[0_8px_32px_0_rgba(0,0,0,0.4)];
+  }
+  
+  .glass-card {
+    @apply glassmorphism rounded-3xl p-6 transition-all duration-300 ease-in-out hover:scale-[1.01] hover:shadow-2xl;
+  }
+
+  .glass-input {
+    @apply w-full bg-[#18181A] shadow-inner rounded-full px-5 py-4 text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#ffa498] focus:bg-[#222] transition duration-300;
+  }
+
+  .glass-button {
+    @apply w-full bg-[#ffa498] hover:bg-[#ff8e7f] text-[#2c1d1a] font-bold py-4 rounded-full transition-all duration-300 shadow-md hover:shadow-xl transform hover:-translate-y-0.5;
+  }
+}
