@@ -1,8 +1,10 @@
 const mongoose = require('mongoose');
 
-// Schema for fixed-price product listings
+// One schema to rule both listing types — fixed-price and auction.
+// The listingType field drives which fields are relevant and required.
 const productSchema = new mongoose.Schema(
   {
+    // ── Core fields shared by both listing types ──────────────────────────
     title: {
       type: String,
       required: true,
@@ -12,23 +14,10 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    price: {
-      type: Number,
-      required: true,
-    },
-    images: [
-      {
-        type: String, // Store image URLs
-      },
-    ],
-    productPic: {
-      type: String,
-      default: '', 
-    },
-    buyingDate: {
-      type: Date,
-      default: Date.now,
-    },
+    images: [{ type: String }], // Array of ImageKit URLs
+    productPic: { type: String, default: '' }, // Primary display image
+    buyingDate: { type: Date, default: Date.now },
+
     seller: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -37,11 +26,51 @@ const productSchema = new mongoose.Schema(
     buyer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      default: null, // Null when the item is still available
+      default: null,
     },
+
+    // "fixed" = direct buy, "auction" = competitive bidding
+    listingType: {
+      type: String,
+      enum: ['fixed', 'auction'],
+      required: true,
+      default: 'fixed',
+    },
+
+    // ── Fixed-price only ──────────────────────────────────────────────────
+    askingPrice: {
+      type: Number,
+      default: null, // Only required when listingType === 'fixed'
+    },
+
+    // ── Auction only ──────────────────────────────────────────────────────
+    startingBid: {
+      type: Number,
+      default: null, // The floor price for bidding
+    },
+    reservePrice: {
+      type: Number,
+      default: null, // Seller's secret minimum — sale only counts if this is met
+    },
+    currentHighestBid: {
+      type: Number,
+      default: 0,
+    },
+    highestBidder: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    auctionEndTime: {
+      type: Date,
+      default: null, // Set when the auction goes live
+    },
+
+    // ── Status ────────────────────────────────────────────────────────────
+    // pending_approval → admin reviews → available → sold/unsold/removed
     status: {
       type: String,
-      enum: ['pending_approval', 'available', 'sold', 'removed'], // Admin verified filter
+      enum: ['pending_approval', 'available', 'active_auction', 'sold', 'unsold', 'removed'],
       default: 'pending_approval',
     },
   },

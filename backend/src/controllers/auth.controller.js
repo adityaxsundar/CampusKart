@@ -222,6 +222,32 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
+// Silently issue a new access token using the refresh token
+exports.refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) return res.status(401).json({ success: false, message: 'No refresh token provided.' });
+
+    const session = await Session.findOne({ refreshToken });
+    if (!session) return res.status(403).json({ success: false, message: 'Invalid or expired session.' });
+
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+
+    const user = await User.findById(decoded.userId).select('-password');
+    if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
+
+    const newAccessToken = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    res.status(200).json({ success: true, accessToken: newAccessToken });
+  } catch (error) {
+    return res.status(403).json({ success: false, message: 'Refresh token expired. Please log in again.' });
+  }
+};
+
 // Verify the OTP and save the newly attached password directly over the DB hash
 exports.resetPassword = async (req, res) => {
   try {

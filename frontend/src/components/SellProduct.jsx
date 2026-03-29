@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import axios from 'axios';
+import api from '../api/axiosInstance';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
@@ -44,12 +44,8 @@ const SellProduct = () => {
          dataPayload.append('productPic', productPic);
       }
 
-      const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5000/api/products/add', dataPayload, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data' 
-        }
+      await api.post('/products/add', dataPayload, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
       
       setSuccess('Product successfully submitted for Admin Verification! Once verified, it will be visible on the Marketplace.');

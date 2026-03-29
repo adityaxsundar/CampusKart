@@ -48,25 +48,27 @@ const Products = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 w-full max-w-7xl mt-8 pb-12">
           {products.map((product) => (
-            <div key={product._id} className="glass-card overflow-hidden flex flex-col items-start text-left bg-[#050b0f] relative group border-teal-900/30">
-              <div className="w-full h-56 bg-[#030a0d] relative -mt-6 -mx-6 mb-4 w-[calc(100%+3rem)] rounded-t-xl overflow-hidden">
+            <div key={product._id} className="glass-card overflow-hidden flex flex-col items-start text-left bg-[#050b0f] relative group border-teal-900/30 p-0">
+              {/* Image area — flush to all edges at the top */}
+              <div className="w-full h-56 relative overflow-hidden rounded-t-xl flex-shrink-0">
                 {product.productPic ? (
                   <img src={product.productPic} alt={product.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-teal-800">No Image provided</div>
+                  <div className="w-full h-full flex items-center justify-center text-teal-800 bg-[#030a0d]">No Image provided</div>
                 )}
                 <div className="absolute top-3 right-3 bg-teal-500/20 text-teal-300 border border-teal-500/30 text-xs font-bold px-3 py-1 rounded-full shadow-lg backdrop-blur-md">
                   Verified
                 </div>
               </div>
               
-              <div className="p-2 flex flex-col flex-grow w-full">
+              {/* Card content below image */}
+              <div className="p-5 flex flex-col flex-grow w-full">
                 <h3 className="text-xl font-bold text-teal-50 mb-2 line-clamp-1" title={product.title}>{product.title}</h3>
                 <p className="text-teal-700 font-medium text-sm mb-4 line-clamp-2" title={product.description}>{product.description}</p>
                 
                 <div className="mt-auto">
                   <div className="flex items-center text-green-400 font-extrabold text-2xl mb-3 drop-shadow-[0_0_8px_rgba(74,222,128,0.2)]">
-                    ₹{product.price}
+                    ₹{product.askingPrice || product.price}
                   </div>
                   
                   <div className="text-xs text-teal-600 flex flex-col gap-1.5 border-t border-teal-900/40 pt-3">
@@ -84,7 +86,6 @@ const Products = () => {
                     )}
                   </div>
                   
-                  {/* Later feature: Start a chat or buy logic */}
                   <button className="w-full mt-5 bg-gradient-to-r from-teal-500 to-teal-400 hover:from-teal-400 hover:to-teal-300 text-[#030a0d] font-black tracking-wide py-2.5 rounded-xl transition-all shadow-[0_0_15px_rgba(0,210,255,0.3)] hover:shadow-[0_0_20px_rgba(0,210,255,0.5)] transform hover:-translate-y-0.5">
                     Contact Seller
                   </button>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import axios from 'axios';
+import api from '../api/axiosInstance';
 import { AuthContext } from '../context/AuthContext';
 import { io } from 'socket.io-client';
 import { Camera, Image as ImageIcon, Mic, ArrowLeft } from 'lucide-react';
@@ -23,10 +23,8 @@ const Chat = () => {
     // Load message history from DB
     const loadHistory = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const { data } = await axios.get('http://localhost:5000/api/messages', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const token = localStorage.getItem('token'); // kept for reference, api instance handles it
+        const { data } = await api.get('/messages');
         setMessages(data.data);
       } catch (err) {
         console.error('History failed:', err);

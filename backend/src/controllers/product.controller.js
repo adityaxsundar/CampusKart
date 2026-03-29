@@ -1,75 +1,92 @@
 const Product = require('../models/product.model');
-const Auction = require('../models/auction.model');
 const { uploadToImageKit } = require('../middleware/upload');
 
-// User adds a product (Defaults to pending_approval)
+// POST /api/products — handles both fixed and auction listing types
 exports.createProduct = async (req, res) => {
   try {
-    const { title, description, price, buyingDate } = req.body;
-    let productPic = '';
+    const { title, description, listingType, askingPrice, startingBid, reservePrice, auctionDurationHours, buyingDate } = req.body;
 
-    // Process image upload through ImageKit
+    // Upload image if provided
+    let productPic = '';
     if (req.file) {
       productPic = await uploadToImageKit(req.file);
     }
 
-    const newProduct = await Product.create({
+    // Validate based on listing type before touching the DB
+    if (listingType === 'fixed') {
+      if (!askingPrice || askingPrice <= 0) {
+        return res.status(400).json({ success: false, message: 'A valid asking price is required for fixed listings.' });
+      }
+    } else if (listingType === 'auction') {
+      if (!startingBid || startingBid <= 0) {
+        return res.status(400).json({ success: false, message: 'A valid starting bid is required for auction listings.' });
+      }
+    } else {
+      return res.status(400).json({ success: false, message: 'listingType must be either "fixed" or "auction".' });
+    }
+
+    // Build the product document — shared fields first
+    const productData = {
       title,
       description,
-      price,
+      listingType,
       productPic,
-      buyingDate,
+      buyingDate: buyingDate || Date.now(),
       seller: req.user._id,
-      status: 'pending_approval' // Explicitly hidden from standard users initially
-    });
+      status: 'pending_approval',
+    };
 
-    res.status(201).json({ success: true, message: 'Product created and awaiting Admin verification.', data: newProduct });
+    // Attach type-specific fields
+    if (listingType === 'fixed') {
+      productData.askingPrice = Number(askingPrice);
+    } else {
+      productData.startingBid = Number(startingBid);
+      productData.currentHighestBid = Number(startingBid); // Start the bidding clock here
+      productData.reservePrice = reservePrice ? Number(reservePrice) : null;
+
+      // Default auction length is 24 hours if not specified
+      const hours = auctionDurationHours ? Number(auctionDurationHours) : 24;
+      productData.auctionEndTime = new Date(Date.now() + hours * 60 * 60 * 1000);
+    }
+
+    const newProduct = await Product.create(productData);
+
+    res.status(201).json({
+      success: true,
+      message: `${listingType === 'fixed' ? 'Fixed-price listing' : 'Auction'} submitted for admin verification.`,
+      data: newProduct,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to list product.', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed to create listing.', error: error.message });
   }
 };
 
-// View available (admin approved) products for all users
+// GET /api/products — public view of all approved listings
 exports.getAvailableProducts = async (req, res) => {
   try {
-    // Only fetch officially available products and populate seller name
-    const products = await Product.find({ status: 'available' }).populate('seller', 'name email');
+    const products = await Product.find({ status: 'available' }).populate('seller', 'name email').sort({ createdAt: -1 });
     res.status(200).json({ success: true, data: products });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to fetch products.', error: error.message });
   }
 };
 
-// Start an auction using a previously approved product
-exports.startAuction = async (req, res) => {
+// GET /api/products/auctions — live auctions only
+exports.getActiveAuctions = async (req, res) => {
   try {
-    const { productId } = req.body;
-    
-    const product = await Product.findOne({ _id: productId, seller: req.user._id, status: 'available' });
-    if (!product) return res.status(403).json({ success: false, message: 'Product not found or not available for auction.' });
+    const auctions = await Product.find({
+      listingType: 'auction',
+      status: 'active_auction',
+      auctionEndTime: { $gt: new Date() }, // Only return auctions that haven't closed yet
+    }).populate('seller', 'name').sort({ auctionEndTime: 1 });
 
-    // Creates an auction out of this product
-    const newAuction = await Auction.create({
-      title: product.title,
-      description: product.description,
-      images: [product.productPic],
-      startingPrice: product.price, // Start auction specifically from standard selling price
-      minBidIncrement: 50,
-      seller: req.user._id,
-      endTime: new Date(Date.now() + 24 * 60 * 60 * 1000) // Default 24 hours timer
-    });
-
-    // We can soft delete or flag the main product so it acts entirely as an auction now
-    product.status = 'sold';
-    await product.save();
-
-    res.status(200).json({ success: true, message: 'Successfully converted to Auction waiting room!', data: newAuction });
+    res.status(200).json({ success: true, data: auctions });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to initiate auction.', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed to fetch auctions.', error: error.message });
   }
 };
 
-// Get products for the currently logged in user
+// GET /api/products/my-products — seller's own listings
 exports.getMyProducts = async (req, res) => {
   try {
     const products = await Product.find({ seller: req.user._id }).sort({ createdAt: -1 });
@@ -79,77 +96,74 @@ exports.getMyProducts = async (req, res) => {
   }
 };
 
-// Update an existing product you own
+// PUT /api/products/:id — update your own listing
 exports.editProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, price, buyingDate } = req.body;
+    const { title, description, askingPrice, buyingDate } = req.body;
 
     const product = await Product.findOne({ _id: id, seller: req.user._id });
     if (!product) return res.status(404).json({ success: false, message: 'Product not found or unauthorized.' });
 
-    product.title = title || product.title;
-    product.description = description || product.description;
-    product.price = price || product.price;
-    product.buyingDate = buyingDate || product.buyingDate;
-
-    if (req.file) {
-      product.productPic = await uploadToImageKit(req.file);
+    // Don't allow editing an auction that already has bids placed
+    if (product.listingType === 'auction' && product.currentHighestBid > product.startingBid) {
+      return res.status(400).json({ success: false, message: 'Cannot edit an auction with active bids.' });
     }
 
-    // Changing product details should revert status to pending_approval if strictly verifying, but for now let's keep it simple
-    // product.status = 'pending_approval';
+    product.title = title || product.title;
+    product.description = description || product.description;
+    product.buyingDate = buyingDate || product.buyingDate;
+    if (askingPrice) product.askingPrice = Number(askingPrice);
+    if (req.file) product.productPic = await uploadToImageKit(req.file);
 
     await product.save();
-    res.status(200).json({ success: true, message: 'Product updated successfully.', data: product });
+    res.status(200).json({ success: true, message: 'Product updated.', data: product });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to update product.', error: error.message });
   }
 };
 
-// Delete a product you own
+// DELETE /api/products/:id — remove your own listing
 exports.deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
     const product = await Product.findOneAndDelete({ _id: id, seller: req.user._id });
-    if (!product) return res.status(404).json({ success: false, message: 'Product not found or unauthorized to delete.' });
-
-    res.status(200).json({ success: true, message: 'Product deleted successfully.' });
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found or unauthorized.' });
+    res.status(200).json({ success: true, message: 'Product deleted.' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to delete product.', error: error.message });
   }
 };
 
-// ======= ADMIN ROUTES ======= //
+// ── ADMIN ROUTES ────────────────────────────────────────────────────────────
 
-// Get purely pending products waiting
 exports.getPendingProducts = async (req, res) => {
   try {
-    const pendingProducts = await Product.find({ status: 'pending_approval' }).populate('seller', 'name email');
-    res.status(200).json({ success: true, data: pendingProducts });
+    const pending = await Product.find({ status: 'pending_approval' }).populate('seller', 'name email');
+    res.status(200).json({ success: true, data: pending });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to fetch pending products.', error: error.message });
   }
 };
 
-// Admin actively verifying products
 exports.approveProduct = async (req, res) => {
   try {
     const { id } = req.params;
     const { action } = req.body; // 'approve' or 'reject'
 
     const product = await Product.findById(id);
-    if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found.' });
 
     if (action === 'approve') {
-      product.status = 'available';
+      // Auctions go straight into active bidding when approved
+      product.status = product.listingType === 'auction' ? 'active_auction' : 'available';
     } else {
       product.status = 'removed';
     }
-    
+
     await product.save();
-    res.status(200).json({ success: true, message: `Product successfully ${action}d.` });
+    res.status(200).json({ success: true, message: `Product ${action}d successfully.`, data: product });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to update product status.', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed to update status.', error: error.message });
   }
 };

@@ -5,23 +5,25 @@ const router = express.Router();
 const {
   createProduct,
   getAvailableProducts,
-  startAuction,
+  getActiveAuctions,
+  getMyProducts,
+  editProduct,
+  deleteProduct,
   getPendingProducts,
   approveProduct,
-  getMyProducts,
-  deleteProduct,
-  editProduct
 } = require('../controllers/product.controller');
 
-// PUBLIC / USER ROUTES
-router.post('/add', verifyToken, upload.single('productPic'), createProduct);
+// ── Public routes ──────────────────────────────────────────────────────────
 router.get('/', getAvailableProducts);
-router.post('/start-auction', verifyToken, startAuction);
-router.get('/my-products', verifyToken, getMyProducts);
-router.delete('/:id', verifyToken, deleteProduct);
-router.put('/:id', verifyToken, upload.single('productPic'), editProduct);
+router.get('/auctions', getActiveAuctions);
 
-// ADMIN SPECIFIC ROUTES
+// ── Authenticated user routes ──────────────────────────────────────────────
+router.post('/add', verifyToken, upload.single('productPic'), createProduct);
+router.get('/my-products', verifyToken, getMyProducts);
+router.put('/:id', verifyToken, upload.single('productPic'), editProduct);
+router.delete('/:id', verifyToken, deleteProduct);
+
+// ── Admin-only routes ──────────────────────────────────────────────────────
 router.get('/admin/pending', verifyToken, isAdmin, getPendingProducts);
 router.put('/admin/approve/:id', verifyToken, isAdmin, approveProduct);
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
-import axios from 'axios';
+import api from '../api/axiosInstance';
 import { AuthContext } from '../context/AuthContext';
 import { CheckCircle, XCircle } from 'lucide-react';
 
@@ -14,11 +14,7 @@ const AdminDashboard = () => {
 
   const fetchPending = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if(!token) return;
-      const { data } = await axios.get('http://localhost:5000/api/products/admin/pending', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const { data } = await api.get('/products/admin/pending');
       setPendingProducts(data.data);
     } catch (err) {
       console.error(err);
@@ -33,11 +29,7 @@ const AdminDashboard = () => {
 
   const handleAction = async (id, action) => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:5000/api/products/admin/approve/${id}`, 
-        { action }, 
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.put(`/products/admin/approve/${id}`, { action });
       // Remove dynamically from screen
       setPendingProducts(pendingProducts.filter(p => p._id !== id));
     } catch (err) {
