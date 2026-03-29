@@ -16,27 +16,8 @@ const RootRedirect = () => {
   return user ? <Navigate to="/products" replace /> : <Navigate to="/login" replace />;
 };
 
-// Placeholder for Products Page
-const Products = () => (
-  <div className="flex flex-col items-center justify-center min-h-[50vh] animate-fade-in text-center px-4">
-    <h1 className="text-4xl font-bold text-[#ffa498] mb-4 drop-shadow-lg">Marketplace</h1>
-    <p className="text-gray-300 max-w-lg mb-8">
-      Explore fixed-price products listed strictly by verified IITP students. More features coming soon!
-    </p>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl mt-8">
-      {/* Sample empty state or mock cards */}
-      <div className="glass-card flex items-center justify-center h-48 bg-[#111] bg-opacity-90">
-        <span className="opacity-50 text-xl font-medium">No Products Found</span>
-      </div>
-      <div className="glass-card flex items-center justify-center h-48 bg-[#111] bg-opacity-90">
-        <span className="opacity-50 text-xl font-medium">No Products Found</span>
-      </div>
-      <div className="glass-card flex items-center justify-center h-48 bg-[#111] bg-opacity-90">
-        <span className="opacity-50 text-xl font-medium">No Products Found</span>
-      </div>
-    </div>
-  </div>
-);
+import Products from './components/Products';
+
 
 // Placeholder for Auctions Page
 const Auctions = () => (
@@ -61,7 +42,7 @@ const App = () => {
           <div className="fixed bottom-20 right-10 w-[400px] h-[400px] bg-purple-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-20 animate-pulse delay-500 pointer-events-none -z-10"></div>
 
           <Navbar />
-          
+
           <main className="flex-grow z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center">
             <Routes>
               <Route path="/" element={<RootRedirect />} />
