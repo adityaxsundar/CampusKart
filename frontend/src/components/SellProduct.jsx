@@ -108,7 +108,7 @@ const SellProduct = () => {
           </div>
 
           <button type="submit" disabled={loading} className="glass-button w-full flex justify-center mt-6">
-            {loading ? 'Submitting...' : 'Upload for Verification'}
+            {loading ? 'Saving...' : 'Save as Draft'}
           </button>
         </form>
       </div>

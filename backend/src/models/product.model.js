@@ -41,8 +41,8 @@ const productSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending_approval', 'available', 'sold', 'removed'], // Admin verified filter
-      default: 'pending_approval',
+      enum: ['draft', 'pending_approval', 'available', 'sold', 'removed'], // Admin verified filter
+      default: 'draft',
     },
   },
   { timestamps: true }

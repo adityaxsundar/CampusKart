@@ -20,10 +20,10 @@ exports.createProduct = async (req, res) => {
       productPic,
       buyingDate,
       seller: req.user._id,
-      status: 'pending_approval' // Explicitly hidden from standard users initially
+      status: 'draft' // Saved as draft initially
     });
 
-    res.status(201).json({ success: true, message: 'Product created and awaiting Admin verification.', data: newProduct });
+    res.status(201).json({ success: true, message: 'Product saved as a draft.', data: newProduct });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to list product.', error: error.message });
   }
@@ -117,6 +117,52 @@ exports.deleteProduct = async (req, res) => {
     res.status(200).json({ success: true, message: 'Product deleted successfully.' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to delete product.', error: error.message });
+  }
+};
+
+// Update a product's status (Supports Draft, Pending, Available, Removed, Sold transitions)
+exports.changeProductStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body; 
+
+    // Allowed logic-controlled statuses for users
+    const allowedStatuses = ['draft', 'pending_approval', 'available', 'removed', 'sold'];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ success: false, message: 'Invalid status requested.' });
+    }
+
+    const product = await Product.findOne({ _id: id, seller: req.user._id });
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found or unauthorized.' });
+
+    // Transition Logic:
+    // 1. DRAFT <-> PENDING_APPROVAL (Cancellation/Submission)
+    // 2. REMOVED <-> DRAFT / PENDING_APPROVAL (Resubmission/Editing restricted items)
+    // 3. AVAILABLE -> REMOVED (User choosing to hide it)
+    // 4. AVAILABLE <-> SOLD (Mark as purchased/available)
+
+    const current = product.status;
+
+    // RULE: If already 'removed' by admin, they can move it back to 'draft' or 'pending_approval'
+    if (current === 'removed' && !['draft', 'pending_approval'].includes(status)) {
+       return res.status(403).json({ success: false, message: 'Removed products can only be moved to Draft or Pending for re-verification.' });
+    }
+
+    // RULE: If 'available', can only move to 'removed' or 'sold'
+    if (current === 'available' && !['removed', 'sold'].includes(status)) {
+      return res.status(403).json({ success: false, message: 'Active products can only be marked as Sold or Removed.' });
+    }
+
+    // RULE: If 'sold', can only move to 'available' or 'removed'
+    if (current === 'sold' && !['available', 'removed'].includes(status)) {
+       return res.status(403).json({ success: false, message: 'Sold products can only be moved back to Available or Removed.' });
+    }
+
+    product.status = status;
+    await product.save();
+    res.status(200).json({ success: true, message: `Product status updated to ${status.replace('_', ' ')}.` });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to update product status.', error: error.message });
   }
 };
 
