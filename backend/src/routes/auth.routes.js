@@ -1,5 +1,5 @@
 const express = require('express');
-const { register, verifyOTP, resendOTP, login, logout, forgotPassword, resetPassword } = require('../controllers/auth.controller');
+const { register, verifyOTP, resendOTP, login, logout, forgotPassword, resetPassword, refreshToken } = require('../controllers/auth.controller');
 
 const router = express.Router();
 
@@ -11,5 +11,6 @@ router.post('/login', login);
 router.post('/logout', logout);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
+router.post('/refresh-token', refreshToken);
 
 module.exports = router;

@@ -13,7 +13,8 @@ const app = express();
 // Middleware
 // Allow dynamic environments (like when Vite shifts to port 5174 automatically)
 app.use(cors({ origin: true, credentials: true }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Main Routes
 app.use('/api/auth', authRoutes);

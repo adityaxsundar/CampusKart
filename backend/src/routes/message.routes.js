@@ -1,16 +1,13 @@
 const express = require('express');
 const { verifyToken } = require('../middleware/auth');
-const Message = require('../models/message.model');
+const { upload } = require('../middleware/upload');
+const { getUserChats, getChatMessages, getOrCreateChat, getUserNotifications, uploadAttachment } = require('../controllers/message.controller');
 const router = express.Router();
 
-// Fetch message history globally or for specific context easily
-router.get('/', verifyToken, async (req, res) => {
-  try {
-    const messages = await Message.find().populate('sender', 'name').sort({ createdAt: 1 });
-    res.status(200).json({ success: true, data: messages });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Could not fetch history.', error: error.message });
-  }
-});
+router.get('/chats', verifyToken, getUserChats);
+router.get('/notifications', verifyToken, getUserNotifications);
+router.get('/:chatId/messages', verifyToken, getChatMessages);
+router.post('/init', verifyToken, getOrCreateChat);
+router.post('/upload', verifyToken, upload.single('file'), uploadAttachment);
 
 module.exports = router;

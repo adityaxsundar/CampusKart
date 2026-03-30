@@ -5,26 +5,29 @@ const router = express.Router();
 const {
   createProduct,
   getAvailableProducts,
-  startAuction,
+  getActiveAuctions,
+  getMyProducts,
+  editProduct,
+  deleteProduct,
   getPendingProducts,
   approveProduct,
-  getMyProducts,
-  deleteProduct,
-  editProduct,
-  changeProductStatus
+  getProductById
 } = require('../controllers/product.controller');
 
-// PUBLIC / USER ROUTES
-router.post('/add', verifyToken, upload.single('productPic'), createProduct);
-router.get('/', getAvailableProducts);
-router.post('/start-auction', verifyToken, startAuction);
+// ── Static routes MUST come before /:id to avoid being swallowed ────────────
+router.get('/auctions', getActiveAuctions);
 router.get('/my-products', verifyToken, getMyProducts);
-router.delete('/:id', verifyToken, deleteProduct);
-router.put('/:id', verifyToken, upload.single('productPic'), editProduct);
-router.put('/status/:id', verifyToken, changeProductStatus);
-
-// ADMIN SPECIFIC ROUTES
 router.get('/admin/pending', verifyToken, isAdmin, getPendingProducts);
+
+// ── Public routes ──────────────────────────────────────────────────────────
+router.get('/', getAvailableProducts);
+router.get('/:id', getProductById);
+
+// ── Authenticated user routes ──────────────────────────────────────────────
+router.post('/add', verifyToken, upload.single('productPic'), createProduct);
 router.put('/admin/approve/:id', verifyToken, isAdmin, approveProduct);
+router.put('/:id', verifyToken, upload.single('productPic'), editProduct); // for image uploads
+router.patch('/:id', verifyToken, editProduct); // for JSON-only updates (status, fields)
+router.delete('/:id', verifyToken, deleteProduct);
 
 module.exports = router;

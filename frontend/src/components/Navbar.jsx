@@ -44,9 +44,9 @@ const Navbar = () => {
               <User size={20} />
               Profile
             </Link>
-            <button onClick={logout} className="ml-2 flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 rounded-xl px-4 py-2 transition-all">
+            <button onClick={logout} className="ml-2 flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 rounded-xl px-4 py-2 transition-all shadow-md">
               <LogOut size={18} />
-              Quit
+              Log out
             </button>
           </>
         )}

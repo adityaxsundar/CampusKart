@@ -17,21 +17,9 @@ const RootRedirect = () => {
 };
 
 import Products from './components/Products';
-
+import Auctions from './components/Auctions';
+import AuctionRoom from './components/AuctionRoom';
 import Profile from './components/Profile';
-
-// Placeholder for Auctions Page
-const Auctions = () => (
-  <div className="flex flex-col items-center justify-center min-h-[50vh] animate-fade-in text-center px-4">
-    <h1 className="text-4xl font-black text-teal-400 mb-4 drop-shadow-lg">Live Auctions</h1>
-    <p className="text-teal-100 max-w-lg mb-8">
-      Place structured bids on real-time timed listings. Your bids will be managed securely over Socket.io connections!
-    </p>
-    <div className="glass-card w-full max-w-3xl flex items-center justify-center h-64 mt-10">
-      <p className="opacity-50 text-2xl tracking-wide font-medium text-teal-50">No Active Auctions Right Now.</p>
-    </div>
-  </div>
-);
 
 const App = () => {
   return (
@@ -50,6 +38,7 @@ const App = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/products" element={<Products />} />
               <Route path="/auctions" element={<Auctions />} />
+              <Route path="/auction/bidding" element={<AuctionRoom />} />
               <Route path="/sell" element={<SellProduct />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/chat" element={<Chat />} />
@@ -58,7 +47,6 @@ const App = () => {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
-
           <Footer />
         </div>
       </Router>
