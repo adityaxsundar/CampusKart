@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../api/axiosInstance';
 import { ShoppingBag, Calendar, User } from 'lucide-react';
 
 const Products = () => {
@@ -10,7 +10,7 @@ const Products = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/products');
+        const res = await api.get('/products');
         if (res.data.success) {
           setProducts(res.data.data);
         } else {
@@ -25,6 +25,18 @@ const Products = () => {
 
     fetchProducts();
   }, []);
+
+  const handleContactSeller = async (sellerId, productId) => {
+    try {
+      const { data } = await api.post('/messages/init', { sellerId, productId });
+      if (data.success) {
+        // Redirect to chat with the new chatId
+        window.location.href = `/chat?id=${data.data._id}`;
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to start chat.');
+    }
+  };
 
   return (
     <div className="flex flex-col items-center justify-start min-h-[50vh] animate-fade-in text-center px-4 w-full pt-10">
@@ -86,7 +98,10 @@ const Products = () => {
                     )}
                   </div>
                   
-                  <button className="w-full mt-5 bg-gradient-to-r from-teal-500 to-teal-400 hover:from-teal-400 hover:to-teal-300 text-[#030a0d] font-black tracking-wide py-2.5 rounded-xl transition-all shadow-[0_0_15px_rgba(0,210,255,0.3)] hover:shadow-[0_0_20px_rgba(0,210,255,0.5)] transform hover:-translate-y-0.5">
+                  <button 
+                    onClick={() => handleContactSeller(product.seller._id, product._id)}
+                    className="w-full mt-5 bg-gradient-to-r from-teal-500 to-teal-400 hover:from-teal-400 hover:to-teal-300 text-[#030a0d] font-black tracking-wide py-2.5 rounded-xl transition-all shadow-[0_0_15px_rgba(0,210,255,0.3)] hover:shadow-[0_0_20px_rgba(0,210,255,0.5)] transform hover:-translate-y-0.5"
+                  >
                     Contact Seller
                   </button>
                 </div>

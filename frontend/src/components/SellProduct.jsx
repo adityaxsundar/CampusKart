@@ -14,7 +14,10 @@ const SellProduct = () => {
     title: '',
     description: '',
     price: '',
-    buyingDate: ''
+    buyingDate: '',
+    listingType: 'fixed',
+    startingBid: '',
+    auctionEndTime: ''
   });
   const [productPic, setProductPic] = useState(null);
 
@@ -38,7 +41,15 @@ const SellProduct = () => {
       const dataPayload = new FormData();
       dataPayload.append('title', formData.title);
       dataPayload.append('description', formData.description);
-      dataPayload.append('price', formData.price);
+      dataPayload.append('listingType', formData.listingType);
+      
+      if (formData.listingType === 'fixed') {
+        dataPayload.append('askingPrice', formData.price);
+      } else {
+        dataPayload.append('startingBid', formData.startingBid);
+        dataPayload.append('auctionEndTime', formData.auctionEndTime);
+      }
+
       dataPayload.append('buyingDate', formData.buyingDate);
       if (productPic) {
          dataPayload.append('productPic', productPic);
@@ -49,7 +60,7 @@ const SellProduct = () => {
       });
       
       setSuccess('Product successfully submitted for Admin Verification! Once verified, it will be visible on the Marketplace.');
-      setFormData({ title: '', description: '', price: '', buyingDate: ''});
+      setFormData({ title: '', description: '', price: '', buyingDate: '', listingType: 'fixed', startingBid: '', auctionEndTime: ''});
       setProductPic(null);
       setTimeout(() => navigate('/products'), 3000);
     } catch (err) {
@@ -77,6 +88,15 @@ const SellProduct = () => {
         {success && <div className="bg-green-500/10 border border-green-500/30 text-green-400 p-3 rounded-lg mb-4 text-sm text-center font-medium backdrop-blur-sm shadow">{success}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="flex bg-[#050b0f] p-1 rounded-2xl border border-teal-900/40 mb-2 shadow-inner">
+            <button type="button" onClick={() => setFormData({ ...formData, listingType: 'fixed' })} className={`flex-1 py-2.5 rounded-xl text-sm font-black transition-all ${formData.listingType === 'fixed' ? 'bg-teal-500 text-[#030a0d] shadow-[0_0_15px_rgba(20,184,166,0.3)]' : 'text-teal-700 hover:text-teal-400'}`}>
+              Fixed Price
+            </button>
+            <button type="button" onClick={() => setFormData({ ...formData, listingType: 'auction' })} className={`flex-1 py-2.5 rounded-xl text-sm font-black transition-all ${formData.listingType === 'auction' ? 'bg-teal-500 text-[#030a0d] shadow-[0_0_15px_rgba(20,184,166,0.3)]' : 'text-teal-700 hover:text-teal-400'}`}>
+              Auction
+            </button>
+          </div>
+
           <div>
             <label className="block text-teal-500 text-sm mb-1 font-semibold">Product Title</label>
             <input type="text" name="title" required value={formData.title} onChange={handleChange} className="glass-input w-full" placeholder="e.g. Scientific Calculator" />
@@ -88,15 +108,29 @@ const SellProduct = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-teal-500 text-sm mb-1 font-semibold">Selling Price (₹)</label>
-              <input type="number" name="price" required value={formData.price} onChange={handleChange} className="glass-input w-full" placeholder="Price" />
-            </div>
+            {formData.listingType === 'fixed' ? (
+              <div>
+                <label className="block text-teal-500 text-sm mb-1 font-semibold">Selling Price (₹)</label>
+                <input type="number" name="price" required={formData.listingType === 'fixed'} value={formData.price} onChange={handleChange} className="glass-input w-full" placeholder="Price" />
+              </div>
+            ) : (
+              <div>
+                <label className="block text-teal-500 text-sm mb-1 font-semibold">Starting Bid (₹)</label>
+                <input type="number" name="startingBid" required={formData.listingType === 'auction'} value={formData.startingBid} onChange={handleChange} className="glass-input w-full" placeholder="Bid Starts At" />
+              </div>
+            )}
             <div>
               <label className="block text-teal-500 text-sm mb-1 font-semibold">Buying Date</label>
-              <input type="date" name="buyingDate" required value={formData.buyingDate} onChange={handleChange} className="glass-input w-full text-teal-50" />
+              <input type="date" name="buyingDate" required value={formData.buyingDate} onChange={handleChange} className="glass-input w-full text-white" />
             </div>
           </div>
+
+          {formData.listingType === 'auction' && (
+            <div className="animate-fade-in">
+              <label className="block text-teal-500 text-sm mb-1 font-semibold">Auction End Time</label>
+              <input type="datetime-local" name="auctionEndTime" required={formData.listingType === 'auction'} value={formData.auctionEndTime} onChange={handleChange} className="glass-input w-full text-white" />
+            </div>
+          )}
 
           <div>
             <label className="block text-teal-500 text-sm mb-1 font-semibold">Product Picture</label>

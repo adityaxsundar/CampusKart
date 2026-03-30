@@ -61,6 +61,17 @@ exports.createProduct = async (req, res) => {
   }
 };
 
+// GET /api/products/:id — single product details
+exports.getProductById = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id).populate('seller', 'name email');
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found.' });
+    res.status(200).json({ success: true, data: product });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch product.', error: error.message });
+  }
+};
+
 // GET /api/products — public view of all approved listings
 exports.getAvailableProducts = async (req, res) => {
   try {
@@ -76,9 +87,8 @@ exports.getActiveAuctions = async (req, res) => {
   try {
     const auctions = await Product.find({
       listingType: 'auction',
-      status: 'active_auction',
-      auctionEndTime: { $gt: new Date() }, // Only return auctions that haven't closed yet
-    }).populate('seller', 'name').sort({ auctionEndTime: 1 });
+      status: 'active_auction'
+    }).populate('seller', 'name email').sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, data: auctions });
   } catch (error) {
@@ -96,25 +106,38 @@ exports.getMyProducts = async (req, res) => {
   }
 };
 
-// PUT /api/products/:id — update your own listing
+// PUT /api/products/:id — update your own listing (fields + status)
 exports.editProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, askingPrice, buyingDate } = req.body;
+    const { title, description, askingPrice, buyingDate, status } = req.body;
 
     const product = await Product.findOne({ _id: id, seller: req.user._id });
     if (!product) return res.status(404).json({ success: false, message: 'Product not found or unauthorized.' });
 
-    // Don't allow editing an auction that already has bids placed
-    if (product.listingType === 'auction' && product.currentHighestBid > product.startingBid) {
+    // Allow seller-initiated status transitions
+    const allowedStatusTransitions = ['sold', 'purchased', 'pending_approval', 'removed'];
+    if (status && allowedStatusTransitions.includes(status)) {
+      product.status = status;
+    }
+
+    // Don't allow editing field content of an auction that already has bids placed
+    if (!status && product.listingType === 'auction' && product.currentHighestBid > product.startingBid) {
       return res.status(400).json({ success: false, message: 'Cannot edit an auction with active bids.' });
     }
 
-    product.title = title || product.title;
-    product.description = description || product.description;
-    product.buyingDate = buyingDate || product.buyingDate;
+    if (title)       product.title       = title;
+    if (description) product.description = description;
+    if (buyingDate)  product.buyingDate  = buyingDate;
     if (askingPrice) product.askingPrice = Number(askingPrice);
-    if (req.file) product.productPic = await uploadToImageKit(req.file);
+    if (req.file)    product.productPic  = await uploadToImageKit(req.file);
+
+    // If any content field was edited (not just a status change), 
+    // send the listing back for admin re-verification
+    const contentEdited = title || description || askingPrice || buyingDate || req.file;
+    if (contentEdited && !status) {
+      product.status = 'pending_approval';
+    }
 
     await product.save();
     res.status(200).json({ success: true, message: 'Product updated.', data: product });
@@ -139,7 +162,8 @@ exports.deleteProduct = async (req, res) => {
 
 exports.getPendingProducts = async (req, res) => {
   try {
-    const pending = await Product.find({ status: 'pending_approval' }).populate('seller', 'name email');
+    const pending = await Product.find({ status: 'pending_approval' })
+      .populate('seller', 'name email');
     res.status(200).json({ success: true, data: pending });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to fetch pending products.', error: error.message });

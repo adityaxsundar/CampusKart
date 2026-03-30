@@ -11,54 +11,110 @@ const io = new Server(server, {
 
 const Message = require('./src/models/message.model');
 const Product = require('./src/models/product.model');
+const Chat = require('./src/models/chat.model');
+const Notification = require('./src/models/notification.model');
+const Bid = require('./src/models/bid.model');
+
+const onlineUsers = new Map(); // userId -> socketId
 
 io.on('connection', (socket) => {
   console.log(`Socket connected: ${socket.id}`);
 
-  // Client joins a room keyed by productId — works for both chat and auctions
-  socket.on('join_room', (roomId) => {
-    socket.join(roomId);
-    console.log(`Socket ${socket.id} joined room: ${roomId}`);
+  // Heartbeat/Presence registration
+  socket.on('user_online', (userId) => {
+    if (userId) {
+      onlineUsers.set(userId.toString(), socket.id);
+      io.emit('user_status_change', { userId: userId.toString(), status: 'online' });
+      console.log(`User ${userId} is now online`);
+    }
+  });
+
+  // Join a specific room (Chat or Auction)
+  socket.on('join_room', async ({ roomId, userId, type }) => {
+    if (userId) {
+      onlineUsers.set(userId.toString(), socket.id);
+    }
+    try {
+      if (type === 'chat') {
+        const chat = await Chat.findOne({ _id: roomId, participants: userId });
+        if (chat) {
+          socket.join(roomId);
+          console.log(`User ${userId} securely joined chat: ${roomId}`);
+        } else {
+          socket.emit('error', { message: 'Unauthorized room access.' });
+        }
+      } else if (type === 'auction') {
+        // Auctions are public rooms for registered users
+        socket.join(roomId);
+        console.log(`User ${userId} watching auction: ${roomId}`);
+        
+        // Send initial history
+        const history = await Bid.find({ product: roomId })
+          .sort({ createdAt: -1 })
+          .limit(10)
+          .populate('bidder', 'name');
+        socket.emit('bid_history', history);
+      }
+    } catch (e) {
+      console.error('Room Join Error:', e);
+    }
   });
 
   // ── Real-time bidding ────────────────────────────────────────────────────
-  // Client sends: { productId, bidderId, bidAmount }
   socket.on('place_bid', async (data) => {
     const { productId, bidderId, bidAmount } = data;
 
     try {
       const product = await Product.findById(productId);
 
-      // Guard: only accept bids on live auctions
       if (!product || product.status !== 'active_auction') {
         socket.emit('bid_error', { message: 'This auction is not active.' });
         return;
       }
 
-      // Guard: check the auction hasn't timed out
+      // Guard: Seller cannot bid on their own item
+      if (product.seller.toString() === bidderId) {
+        socket.emit('bid_error', { message: 'You cannot bid on your own listing.' });
+        return;
+      }
+
       if (new Date() > product.auctionEndTime) {
-        product.status = 'unsold';
-        await product.save();
-        io.to(productId).emit('auction_ended', { productId, message: 'Auction has ended.' });
+        socket.emit('bid_error', { message: 'Auction has already ended.' });
         return;
       }
 
-      // Guard: new bid must actually beat the current highest
+      // Lock: Check fresh DB state for highest bid
       if (bidAmount <= product.currentHighestBid) {
-        socket.emit('bid_error', { message: `Bid must be higher than ₹${product.currentHighestBid}.` });
+        socket.emit('bid_error', { message: `Bid must be higher than current highest (₹${product.currentHighestBid}).` });
         return;
       }
 
-      // All checks passed — update the DB
+      // Record the bid
+      const newBid = await Bid.create({
+        product: productId,
+        bidder: bidderId,
+        amount: bidAmount
+      });
+
+      // Update Product pointer
       product.currentHighestBid = bidAmount;
       product.highestBidder = bidderId;
       await product.save();
 
-      // Broadcast the new bid state to everyone watching this auction
+      const populatedBid = await newBid.populate('bidder', 'name');
+
+      // Fetch fresh history for the room
+      const history = await Bid.find({ product: productId })
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .populate('bidder', 'name');
+
+      // Broadcast to everyone in the auction room
       io.to(productId).emit('bid_updated', {
         productId,
         currentHighestBid: product.currentHighestBid,
-        highestBidder: bidderId,
+        highestBidderName: populatedBid.bidder.name,
+        history: history
       });
 
     } catch (err) {
@@ -67,22 +123,69 @@ io.on('connection', (socket) => {
     }
   });
 
-  // ── Chat messages ─────────────────────────────────────────────────────────
+  // ── Seller Broadcasts ────────────────────────────────────────────────────
+  socket.on('seller_broadcast', ({ productId, text }) => {
+    io.to(productId).emit('broadcast_received', { text, timestamp: new Date() });
+  });
+
+  // Handle individual chat messages and persist them securely
   socket.on('send_message', async (data) => {
     try {
+      const { chatId, senderId, text, isAudio, attachmentUrl, isImage } = data;
+      
       const message = await Message.create({
-        sender: data.senderId,
-        content: data.text,
-        isAudio: data.isAudio || false,
+        chat: chatId,
+        sender: senderId,
+        content: text || '',
+        attachmentUrl: attachmentUrl || '',
+        isAudio: isAudio || false,
+        isImage: isImage || false
       });
-      const populated = await message.populate('sender', 'name');
-      io.to(data.roomId).emit('receive_message', populated);
+
+      // Update Chat: lastMessage and increment unreadCount for other participants
+      const chat = await Chat.findById(chatId);
+      if (chat) {
+        chat.lastMessage = text;
+        chat.participants.forEach(participant => {
+          if (participant.toString() !== senderId) {
+            chat.unreadCount.set(participant.toString(), (chat.unreadCount.get(participant.toString()) || 0) + 1);
+            
+            // Create a database notification for the recipient
+            Notification.create({
+              recipient: participant,
+              sender: senderId,
+              chat: chatId,
+              product: chat.product,
+              content: text
+            }).catch(e => console.error('Notification Error:', e));
+          }
+        });
+        await chat.save();
+      }
+
+      const populatedMsg = await message.populate('sender', 'name');
+      io.to(chatId).emit('receive_message', populatedMsg);
     } catch (err) {
       console.error('Error saving message:', err);
     }
   });
 
+  socket.on('check_online', ({ userId }) => {
+    socket.emit('user_status_change', { userId, status: onlineUsers.has(userId) ? 'online' : 'offline' });
+  });
+
   socket.on('disconnect', () => {
+    let disconnectedUserId = null;
+    for (const [userId, socketId] of onlineUsers.entries()) {
+      if (socketId === socket.id) {
+        disconnectedUserId = userId;
+        break;
+      }
+    }
+    if (disconnectedUserId) {
+      onlineUsers.delete(disconnectedUserId);
+      io.emit('user_status_change', { userId: disconnectedUserId, status: 'offline' });
+    }
     console.log(`Socket disconnected: ${socket.id}`);
   });
 });
