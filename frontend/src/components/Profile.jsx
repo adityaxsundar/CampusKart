@@ -48,6 +48,18 @@ const Profile = () => {
     }
   };
 
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`http://localhost:5000/api/products/status/${id}`, { status: newStatus }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchMyProducts();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update status.');
+    }
+  };
+
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this listing?')) return;
     try {
