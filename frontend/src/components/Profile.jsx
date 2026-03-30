@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
-import { Edit2, Trash2, X, Check, Package } from 'lucide-react';
+import { Edit2, Trash2, X, Check, Package, Send, XCircle, EyeOff, RotateCcw, CheckCircle2 } from 'lucide-react';
 
 const Profile = () => {
   const { user } = useContext(AuthContext);
@@ -32,6 +32,18 @@ const Profile = () => {
       setError(err.response?.data?.message || 'Error fetching products');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`http://localhost:5000/api/products/status/${id}`, { status: newStatus }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchMyProducts();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update status.');
     }
   };
 
@@ -128,13 +140,71 @@ const Profile = () => {
               <div className="flex-grow w-full flex flex-col">
                 <h3 className="text-xl font-bold text-teal-50 mb-1">{product.title}</h3>
                 <p className="text-teal-700 font-extrabold text-2xl mb-4">₹{product.price}</p>
-                <div className="mt-auto grid grid-cols-2 gap-3 border-t border-teal-900/30 pt-4">
-                  <button onClick={() => handleEditClick(product)} className="flex items-center justify-center gap-2 text-sm bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 py-2 rounded-lg transition border border-teal-500/20">
-                    <Edit2 size={16} /> Edit
-                  </button>
-                  <button onClick={() => handleDelete(product._id)} className="flex items-center justify-center gap-2 text-sm bg-red-500/10 hover:bg-red-500/20 text-red-400 py-2 rounded-lg transition border border-red-500/20">
-                    <Trash2 size={16} /> Delete
-                  </button>
+                <div className="mt-auto flex flex-col gap-2 border-t border-teal-900/30 pt-4">
+                  {/* DRAFT STATE */}
+                  {product.status === 'draft' && (
+                    <>
+                      <div className="grid grid-cols-2 gap-3 mb-1">
+                        <button onClick={() => handleEditClick(product)} className="flex items-center justify-center gap-2 text-sm bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 py-2 rounded-lg transition border border-teal-500/20">
+                          <Edit2 size={16} /> Edit
+                        </button>
+                        <button onClick={() => handleDelete(product._id)} className="flex items-center justify-center gap-2 text-sm bg-red-500/10 hover:bg-red-500/20 text-red-400 py-2 rounded-lg transition border border-red-500/20">
+                          <Trash2 size={16} /> Delete
+                        </button>
+                      </div>
+                      <button onClick={() => handleStatusChange(product._id, 'pending_approval')} className="flex items-center justify-center gap-2 text-sm bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 w-full py-2 rounded-lg transition border border-blue-500/40 font-bold">
+                        <Send size={16} /> Send for Verification
+                      </button>
+                    </>
+                  )}
+
+                  {/* PENDING APPROVAL STATE */}
+                  {product.status === 'pending_approval' && (
+                    <button onClick={() => handleStatusChange(product._id, 'draft')} className="flex items-center justify-center gap-2 text-sm bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 w-full py-2 rounded-lg transition border border-yellow-500/30 font-bold">
+                      <XCircle size={16} /> Cancel Request
+                    </button>
+                  )}
+
+                  {/* REMOVED STATE (by Admin or Self) */}
+                  {product.status === 'removed' && (
+                    <>
+                      <div className="grid grid-cols-2 gap-3 mb-1">
+                        <button onClick={() => handleEditClick(product)} className="flex items-center justify-center gap-2 text-sm bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 py-2 rounded-lg transition border border-teal-500/20">
+                          <Edit2 size={16} /> Edit
+                        </button>
+                        <button onClick={() => handleDelete(product._id)} className="flex items-center justify-center gap-2 text-sm bg-red-500/10 hover:bg-red-500/20 text-red-400 py-2 rounded-lg transition border border-red-500/20">
+                          <Trash2 size={16} /> Delete
+                        </button>
+                      </div>
+                      <button onClick={() => handleStatusChange(product._id, 'pending_approval')} className="flex items-center justify-center gap-2 text-sm bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 w-full py-2 rounded-lg transition border border-blue-500/40 font-bold">
+                        <RotateCcw size={16} /> Resubmit for Verification
+                      </button>
+                    </>
+                  )}
+
+                  {/* AVAILABLE STATE */}
+                  {product.status === 'available' && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <button onClick={() => handleStatusChange(product._id, 'removed')} className="flex items-center justify-center gap-2 text-sm bg-gray-500/10 hover:bg-gray-500/20 text-gray-400 py-2 rounded-lg transition border border-gray-500/20">
+                        <EyeOff size={16} /> Remove
+                      </button>
+                      <button onClick={() => handleStatusChange(product._id, 'sold')} className="flex items-center justify-center gap-2 text-sm bg-green-500/20 hover:bg-green-500/30 text-green-400 py-2 rounded-lg transition border border-green-500/30 font-bold">
+                        <CheckCircle2 size={16} /> Mark Purchased
+                      </button>
+                    </div>
+                  )}
+
+                  {/* SOLD STATE */}
+                  {product.status === 'sold' && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <button onClick={() => handleStatusChange(product._id, 'available')} className="flex items-center justify-center gap-2 text-sm bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 py-2 rounded-lg transition border border-teal-500/20">
+                        <RotateCcw size={16} /> Mark Available
+                      </button>
+                      <button onClick={() => handleDelete(product._id)} className="flex items-center justify-center gap-2 text-sm bg-red-500/10 hover:bg-red-500/20 text-red-400 py-2 rounded-lg transition border border-red-500/20">
+                        <Trash2 size={16} /> Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
