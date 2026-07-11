@@ -11,7 +11,7 @@ exports.register = async (req, res) => {
     let { name, email, password } = req.body;
 
     // Convert email to lowercase to prevent case sensitivity issues
-    email = email ? email.toLowerCase() : '';
+    email = email ? email.trim().toLowerCase() : '';
 
     // Check college domain strictly
     if (!email.endsWith('@iitp.ac.in')) {
@@ -34,8 +34,8 @@ exports.register = async (req, res) => {
     await sendEmail({
       from: process.env.GOOGLE_USER,
       to: email,
-      subject: 'Campus Kart: Action Required',
-      text: `Welcome to Campus Kart!\n\nPlease use the following secure code to complete your registration.\n\nCode: ${otpCode}\n\nThis code will expire shortly. Do not share it with anyone.`,
+      subject: 'Welcome to Campus Kart! Here is your OTP',
+      text: `Hi there!\n\nThanks for signing up for Campus Kart. Here is your verification code: ${otpCode}\n\nWelcome to the campus marketplace!`,
     });
 
     // Hash password before saving basic footprint
@@ -61,7 +61,7 @@ exports.register = async (req, res) => {
 exports.verifyOTP = async (req, res) => {
   try {
     let { email, otp } = req.body;
-    email = email ? email.toLowerCase() : '';
+    email = email ? email.trim().toLowerCase() : '';
 
     const validOtp = await OTP.findOne({ email, code: otp });
     if (!validOtp) {
@@ -109,7 +109,7 @@ exports.verifyOTP = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     let { email, password } = req.body;
-    email = email ? email.toLowerCase() : '';
+    email = email ? email.trim().toLowerCase() : '';
 
     const user = await User.findOne({ email });
     if (!user || !user.isVerified) {
@@ -164,7 +164,7 @@ exports.logout = async (req, res) => {
 exports.resendOTP = async (req, res) => {
   try {
     let { email } = req.body;
-    email = email ? email.toLowerCase() : '';
+    email = email ? email.trim().toLowerCase() : '';
 
     // Check if the user actually exists
     const user = await User.findOne({ email });
@@ -183,8 +183,8 @@ exports.resendOTP = async (req, res) => {
     await sendEmail({
       from: process.env.GOOGLE_USER,
       to: email,
-      subject: 'Campus Kart: Action Required (Resend)',
-      text: `Hello,\n\nHere is your new secure code required for registration: ${otpCode}\n\nIt expires in 5 minutes.`,
+      subject: 'Campus Kart - New Verification Code',
+      text: `Hi there,\n\nHere is your new verification code as requested: ${otpCode}\n\nThanks for using Campus Kart!`,
     });
 
     res.status(200).json({ success: true, message: 'A new OTP has been sent successfully.' });
@@ -197,7 +197,7 @@ exports.resendOTP = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
   try {
     let { email } = req.body;
-    email = email ? email.toLowerCase() : '';
+    email = email ? email.trim().toLowerCase() : '';
 
     const user = await User.findOne({ email });
     if (!user) {
@@ -211,8 +211,8 @@ exports.forgotPassword = async (req, res) => {
     await sendEmail({
       from: process.env.GOOGLE_USER,
       to: email,
-      subject: 'Campus Kart: Password Reset Requested',
-      text: `Hello,\n\nYou requested a password reset. Use this secure code to choose a new password:\n\nCode: ${otpCode}\n\nIt expires in 5 minutes. If you did not request this, ignore this email.`,
+      subject: 'Campus Kart - Password Reset',
+      text: `Hi there,\n\nWe received a request to reset your password. You can use this code to choose a new password:\n\nCode: ${otpCode}\n\nIf you didn't request this, you can safely ignore this email.`,
     });
 
     // Return a generic success to prevent email enumeration
@@ -252,7 +252,7 @@ exports.refreshToken = async (req, res) => {
 exports.resetPassword = async (req, res) => {
   try {
     let { email, otp, newPassword } = req.body;
-    email = email ? email.toLowerCase() : '';
+    email = email ? email.trim().toLowerCase() : '';
 
     const validOtp = await OTP.findOne({ email, code: otp });
     if (!validOtp) {
