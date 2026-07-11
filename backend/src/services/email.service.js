@@ -1,10 +1,25 @@
 const nodemailer = require('nodemailer');
 const { google } = require('googleapis');
+const dns = require('dns');
+
+// Force Node.js to use IPv4 first when resolving domains to avoid ENETUNREACH IPv6 errors
+dns.setDefaultResultOrder('ipv4first');
 
 const OAuth2 = google.auth.OAuth2;
 
-// Create configuring OAuth2 client to bypass Gmail security limitations
 const createTransporter = async () => {
+  // If an App Password is provided, use the simpler basic auth approach
+  if (process.env.GOOGLE_APP_PASSWORD) {
+    return nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.GOOGLE_USER,
+        pass: process.env.GOOGLE_APP_PASSWORD,
+      },
+    });
+  }
+
+  // Fallback to the existing OAuth2 method
   const oauth2Client = new OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
@@ -19,7 +34,7 @@ const createTransporter = async () => {
     oauth2Client.getAccessToken((err, token) => {
       if (err) {
         console.error('Failed to create OAuth access token ->', err);
-        reject();
+        reject(err);
       }
       resolve(token);
     });
