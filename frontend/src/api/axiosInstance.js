@@ -2,7 +2,9 @@ import axios from 'axios';
 
 // Axios instance with base URL
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: import.meta.env.MODE === 'development' 
+    ? 'http://localhost:5000/api' 
+    : 'https://campuskart-3mzo.onrender.com/api',
 });
 
 // Attach the access token to every request
@@ -25,7 +27,7 @@ api.interceptors.response.use(
 
       try {
         const refreshToken = localStorage.getItem('refreshToken');
-        const { data } = await axios.post('http://localhost:5000/api/auth/refresh-token', { refreshToken });
+        const { data } = await axios.post(`${api.defaults.baseURL}/auth/refresh-token`, { refreshToken });
 
         // Store the new access token
         localStorage.setItem('token', data.accessToken);
